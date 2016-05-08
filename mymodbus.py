@@ -6,8 +6,8 @@ import minimalmodbus
 
 class MyInstrument(minimalmodbus.Instrument):
     def __init__(self, serial_port, slaveaddress, mode='rtu'):
-        minimalmodbus._SERIALPORTS[port] = serial_port
-        super().__init__(port, slaveaddress, mode=mode)
+        minimalmodbus._SERIALPORTS[serial_port.port] = serial_port
+        super().__init__(serial_port.port, slaveaddress, mode=mode)
 
     def read_input_registers(self, address, number=1):
         return self._genericCommand(functioncode=4,

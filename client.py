@@ -9,7 +9,7 @@ PORT = '/dev/pts/4'
 
 
 client_serial = serial.Serial(
-    port=port,
+    port=PORT,
     baudrate=115200,
     bytesize=8,
     parity='N',
