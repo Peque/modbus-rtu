@@ -1,24 +1,12 @@
 """
 A Modbus RTU client based on minimalmodbus.
 """
-import serial
 import minimalmodbus
 
 
 class MyInstrument(minimalmodbus.Instrument):
-    def __init__(self, port, slaveaddress, mode='rtu'):
-        # TODO: remove when pyserial 3.1 is out
-        minimalmodbus._SERIALPORTS[port] = serial.Serial(
-            port=port,
-            baudrate=115200,
-            bytesize=8,
-            parity='N',
-            stopbits=1,
-            xonxoff=0,
-            timeout=0.05,
-            rtscts=True,
-            dsrdtr=True
-        )
+    def __init__(self, serial_port, slaveaddress, mode='rtu'):
+        minimalmodbus._SERIALPORTS[port] = serial_port
         super().__init__(port, slaveaddress, mode=mode)
 
     def read_input_registers(self, address, number=1):

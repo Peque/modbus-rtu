@@ -12,19 +12,24 @@ import serial
 PORT = '/dev/pts/5'
 
 
-logger = modbus_tk.utils.create_logger(name='console',
-                                       record_format='%(message)s')
-
-server = modbus_rtu.RtuServer(
-    serial.Serial(port=PORT,
-                  baudrate=115200,
-                  bytesize=8,
-                  parity='N',
-                  stopbits=1,
-                  xonxoff=0)
+server_serial = serial.Serial(
+    port=PORT,
+    baudrate=115200,
+    bytesize=8,
+    parity='N',
+    stopbits=1,
+    xonxoff=1,       # Software flow control
+    #rtscts=False,    # Hardware flow control
+    timeout=0.05
 )
 
+server = modbus_rtu.RtuServer(server_serial)
+
+
 try:
+    logger = modbus_tk.utils.create_logger(name='console',
+                                           record_format='%(message)s')
+
     logger.info('Running...')
     logger.info('Enter \'quit\' for closing the server')
 

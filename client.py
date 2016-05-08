@@ -1,11 +1,26 @@
 """
 A client Modbus RTU implementation.
 """
+import serial
 from mymodbus import MyInstrument
 
 
 PORT = '/dev/pts/4'
-instrument = MyInstrument(PORT, slaveaddress=1)
+
+
+client_serial = serial.Serial(
+    port=port,
+    baudrate=115200,
+    bytesize=8,
+    parity='N',
+    stopbits=1,
+    xonxoff=1,       # Software flow control
+    #rtscts=False,    # Hardware flow control
+    timeout=0.05
+)
+
+instrument = MyInstrument(client_serial, slaveaddress=1)
+
 
 # Reading discrete input
 discrete0 = instrument.read_discrete_input(0)
