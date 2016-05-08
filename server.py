@@ -21,8 +21,7 @@ server = modbus_rtu.RtuServer(
                   bytesize=8,
                   parity='N',
                   stopbits=1,
-                  xonxoff=0,
-                  rtscts=True,dsrdtr=True)
+                  xonxoff=0)
 )
 
 try:
