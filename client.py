@@ -1,5 +1,5 @@
 """
-A client Modbus RTU implementation.
+A client Modbus RTU implementation for the MX2 variable-frequency drive.
 """
 import serial
 from datetime import datetime
@@ -26,34 +26,12 @@ instrument = MyInstrument(client_serial, slaveaddress=1)
 
 data = {}
 
-# Reading discrete input
-data['discrete0'] = instrument.read_discrete_input(0)
-data['discrete1'] = instrument.read_discrete_input(1)
-print((data['discrete0'], data['discrete1']))
-assert data['discrete0'] == 0
-assert data['discrete1'] == 1
+# Reading VFD data
+RUN = instrument.read_coil(int(0x13))
+REAL_FREQUENCY = instrument.read_holding_registers(int(0x100B), 2)
 
-# Reading coils
-data['coil0'] = instrument.read_coil(0)
-data['coil1'] = instrument.read_coil(1)
-print((data['coil0'], data['coil1']))
-assert data['coil0'] == 1
-assert data['coil1'] == 0
-
-# Reading input registers
-data['input0'] = instrument.read_input_register(0)
-data['input50'] = instrument.read_input_register(50)
-print((data['input0'], data['input50']))
-assert data['input0'] == 100
-assert data['input50'] == 150
-
-# Reading holding registers
-data['holding0'] = instrument.read_holding_register(0)
-data['holding5'] = instrument.read_holding_register(5)
-print((data['holding0'], data['holding5']))
-assert data['holding0'] == 500
-assert data['holding5'] == 505
-
+# Data post-procesing
+REAL_FREQUENCY_H, REAL_FREQUENCY_L = REAL_FREQUENCY
 
 # Data base storing
 conn = sqlite3.connect('local.db')
@@ -64,12 +42,18 @@ c.execute('''
     CREATE TABLE IF NOT EXISTS log (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         date DATETIME,
-        variable VARCHAR(255),
-        value DOUBLE
+        RUN BOOL,
+        REAL_FREQUENCY_H DOUBLE,
+        REAL_FREQUENCY_L DOUBLE
     )''')
 
-data = [(datetime.today(), key, value) for key, value in data.items()]
-c.executemany('INSERT INTO log VALUES (NULL,?,?,?)', data)
+values = (
+    datetime.today(),
+    RUN,
+    REAL_FREQUENCY_H,
+    REAL_FREQUENCY_L
+)
+c.execute('INSERT INTO log VALUES (NULL,?,?,?,?)', values)
 
 conn.commit()
 
