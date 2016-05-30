@@ -48,7 +48,7 @@ c.execute('''
     )''')
 
 values = (
-    datetime.today(),
+    datetime.utcnow(),
     RUN,
     REAL_FREQUENCY_H,
     REAL_FREQUENCY_L
