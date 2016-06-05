@@ -1,17 +1,26 @@
 """
 A client Modbus RTU implementation for the MX2 variable-frequency drive.
 """
-import serial
-from datetime import datetime
-
+import time
 import sqlite3
+
+import serial
+
 from mymodbus import MyInstrument
+from database import save_coil, save_registers, print_db
 
 
 PORT = '/dev/pts/4'
-
-
-client_serial = serial.Serial(
+DB_NAME = 'local.db'
+SLAVE_ADDR = 1
+MAIN_SLEEP = 3
+COILS = {
+    'RUN': 1,
+}
+REGISTERS = {
+    'REAL_FREQUENCY': (3, 2),
+}
+CLIENT_SERIAL = serial.Serial(
     port=PORT,
     baudrate=115200,
     bytesize=8,
@@ -22,42 +31,20 @@ client_serial = serial.Serial(
     timeout=0.05
 )
 
-instrument = MyInstrument(client_serial, slaveaddress=1)
 
-data = {}
+def main():
+    instrument = MyInstrument(CLIENT_SERIAL, slaveaddress=SLAVE_ADDR)
+    conn = sqlite3.connect(DB_NAME)
+    for name, address in COILS.items():
+        save_coil(conn, instrument, name, address)
+    for name, address in REGISTERS.items():
+        start_addr, n_registers = address
+        save_registers(conn, instrument, name, start_addr, n_registers)
+    print_db(conn, {'COILS': COILS, 'REGISTERS': REGISTERS})
+    conn.close()
 
-# Reading VFD data
-RUN = instrument.read_coil(int(0x13))
-REAL_FREQUENCY = instrument.read_holding_registers(int(0x100B), 2)
 
-# Data post-procesing
-REAL_FREQUENCY_H, REAL_FREQUENCY_L = REAL_FREQUENCY
-
-# Data base storing
-conn = sqlite3.connect('local.db')
-
-c = conn.cursor()
-
-c.execute('''
-    CREATE TABLE IF NOT EXISTS log (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        date DATETIME,
-        RUN BOOL,
-        REAL_FREQUENCY_H DOUBLE,
-        REAL_FREQUENCY_L DOUBLE
-    )''')
-
-values = (
-    datetime.utcnow(),
-    RUN,
-    REAL_FREQUENCY_H,
-    REAL_FREQUENCY_L
-)
-c.execute('INSERT INTO log VALUES (NULL,?,?,?,?)', values)
-
-conn.commit()
-
-for row in c.execute('SELECT * FROM log ORDER BY date'):
-    print(row)
-
-conn.close()
+if __name__ == '__main__':
+    for i in range(3):
+        main()
+        time.sleep(MAIN_SLEEP)
